@@ -65,8 +65,24 @@
 <p>我们再从众多的链接中进行筛选，由于AJAX的类型是XHR的，所以在开发者模式里面我们选择XHR，就能看到只剩下几个链接了，然后从这几个链接里面找出与网站内容极其相符的链接就可以了。<br><img src="https://img-blog.csdnimg.cn/20191101154655910.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQyMjc5MDc3,size_16,color_FFFFFF,t_70" alt="演示图"><br>这样分析出来了网站的内容主要靠AJAX请求的数据来显示的。</p>
 <h3 id="3-分析请求链接"><a href="#3-分析请求链接" class="headerlink" title="3.分析请求链接"></a>3.分析请求链接</h3><p>我们知道这个链接后就会要去请求这个链接，从而在里面获取到自己想要的数据，这样我们就获得了数据。</p>
 <p>我们来看一下==开发者工具==中的==Network区域==的==Headers区域==，经过两次刷新网页会发现两次请求中的参数是有变化的，以及Request Headers的参数也是有变化的，看图。<br>第一次请求：<br><img src="https://img-blog.csdnimg.cn/20191101160014877.png" alt="第一次请求"><br><img src="https://img-blog.csdnimg.cn/20191101160035641.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQyMjc5MDc3,size_16,color_FFFFFF,t_70" alt="第一次请求"><br>第二次请求：<br><img src="https://img-blog.csdnimg.cn/20191101160056345.png" alt="第二次请求"><br><img src="https://img-blog.csdnimg.cn/20191101160109613.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQyMjc5MDc3,size_16,color_FFFFFF,t_70" alt="第二次请求"><br>赖加载请求：</p>
-<p>解释(百度百科)：在Web应用程序中，系统的瓶颈常在于系统的响应速度。如果系统响应速度过慢，用户就会出现埋怨情绪，系统的价值也因此会大打折扣。因此，提高系统响应速度，是非常重要的。<br>Web应用程序做的最多就是和后台数据库交互，而查询数据库是种非常耗时的过程。当数据库里记录过多时，查询优化更显得尤为重要。为了解决这种问题，有人提出了缓存的概念。缓存就是将用户频繁使用的数据放在内存中以便快速访问。在用户执行一次查询操作后，查询的记录会放在缓存中。当用户再次查询时，系统会首先从缓存中读取，如果缓存中没有，再查询数据库。缓存技术在一定程度上提升了系统性能，但是当数据量过大时，缓存就不太合适了。因为内存容量有限，把过多的数据放在内存中，会影响电脑性能。而另一种技术，懒加载可以解决这种问题。<br><img src="https://img-blog.csdnimg.cn/20191101163941394.png" alt="赖加载请求"><br><img src="https://img-blog.csdnimg.cn/20191101164001232.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQyMjc5MDc3,size_16,color_FFFFFF,t_70" alt="赖加载请求"><br>从上面图片来看，我们就能发现链接的参数和请求的headers的参数是有变化的。<br>变化参数的作用：<br>|参数|作用|加密|<br>|–|–|–|<br>|page_type|获取数据的类型为文章还是视频，==视频为0==，==文章为1==|否|<br>|user_id|获取那个用户的数据，在用户链接中获取user_id：<a href="https://www.toutiao.com/c/user/==3410443345==/#mid=3413306633|否|" target="_blank" rel="noopener">https://www.toutiao.com/c/user/==3410443345==/#mid=3413306633|否|</a><br>|max_behot_time|连续获取用户的数据，用于赖加载上，第一次值默认为0，后续的值为上一次返回数据中的max_behot_time的值|否|<br>|count|单次返回最大的数据量，默认值为20|否|<br>|as|每一次请求的链接是否是最近的时间|是|<br>|cp|与上同理|是|<br>|_signature|用于判断user_id和max_behot_time的值跟链接和headers的参数的值是否相等|是|</p>
-<p>需要注意的Request Headers中cookie的参数(解决方法：手动获取这些参数的值)：<br>|参数|作用|变化|加密|<br>|–|–|–|–|<br>|tt_webid|未知|根据我的观察是一天变化一次|是|<br>|WEATHER_CITY|标记城市|不变化|是(urlencode)|<br>|tt_webid|未知|同上tt_webid一样|是|<br>|csrftoken|用于csrf|同上|是|<br>这样就分析完整个网站了，下面开始实战。</p>
+<p>解释(百度百科)：在Web应用程序中，系统的瓶颈常在于系统的响应速度。如果系统响应速度过慢，用户就会出现埋怨情绪，系统的价值也因此会大打折扣。因此，提高系统响应速度，是非常重要的。<br>Web应用程序做的最多就是和后台数据库交互，而查询数据库是种非常耗时的过程。当数据库里记录过多时，查询优化更显得尤为重要。为了解决这种问题，有人提出了缓存的概念。缓存就是将用户频繁使用的数据放在内存中以便快速访问。在用户执行一次查询操作后，查询的记录会放在缓存中。当用户再次查询时，系统会首先从缓存中读取，如果缓存中没有，再查询数据库。缓存技术在一定程度上提升了系统性能，但是当数据量过大时，缓存就不太合适了。因为内存容量有限，把过多的数据放在内存中，会影响电脑性能。而另一种技术，懒加载可以解决这种问题。<br><img src="https://img-blog.csdnimg.cn/20191101163941394.png" alt="赖加载请求"><br><img src="https://img-blog.csdnimg.cn/20191101164001232.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQyMjc5MDc3,size_16,color_FFFFFF,t_70" alt="赖加载请求"><br>从上面图片来看，我们就能发现链接的参数和请求的headers的参数是有变化的。<br>变化参数的作用：</p>
+<ul>
+<li>page_type：作用：获取数据的类型为文章还是视频，==视频为0==，==文章为1== 加密：否</li>
+<li>user_id：作用：获取那个用户的数据，在用户链接中获取user_id：<a href="https://www.toutiao.com/c/user/==3410443345==/#mid=3413306633" target="_blank" rel="noopener">https://www.toutiao.com/c/user/==3410443345==/#mid=3413306633</a> 加密：否</li>
+<li>max_behot_time: 作用：连续获取用户的数据，用于赖加载上，第一次值默认为0，后续的值为上一次返回数据中的max_behot_time的值 加密：否</li>
+<li>count 作用：单次返回最大的数据量，默认值为20 加密：否</li>
+<li>as 作用：每一次请求的链接是否是最近的时间 加密：是</li>
+<li>cp 作用：每一次请求的链接是否是最近的时间 加密：是</li>
+<li>_signature 作用：用于判断user_id和max_behot_time的值跟链接和headers的参数的值是否相等 加密：是</li>
+</ul>
+<p>需要注意的Request Headers中cookie的参数(解决方法：手动获取这些参数的值)：</p>
+<ul>
+<li>tt_webid 作用：未知 变化：根据我的观察是一天变化一次 加密：是</li>
+<li>WEATHER_CITY 作用：标记城市 变化：不变化|加密：是(urlencode)</li>
+<li>tt_webid 作用：未知 变化：同上tt_webid一样|加密：是</li>
+<li>csrftoken 作用：用于csrf 变化：同上 加密：是</li>
+</ul>
+<p>这样就分析完整个网站了，下面开始实战。</p>
 <h1 id="爬取今日头条"><a href="#爬取今日头条" class="headerlink" title="爬取今日头条"></a>爬取今日头条</h1><p>知道这些加密参数后就开始对加密参数进行破解</p>
 <h3 id="1-破解as和cp"><a href="#1-破解as和cp" class="headerlink" title="1.破解as和cp"></a>1.破解as和cp</h3><p>首先我们已经知道了每次的访问参数都在变化，所以我们要先找出这些参数的加密代码，也就是js代码。</p>
 <p>搜索js文件中带有<code>as</code>或<code>cp</code>或<code>_signature</code>字符的文件，然后再分析代码是怎么构成的。</p>
